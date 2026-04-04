@@ -1,0 +1,6 @@
+{
+  "telegram_token": "YOUR_TELEGRAM_BOT_TOKEN",
+  "log_level": "info",
+  "worker_count": 5,
+  "queue_size": 100
+}
