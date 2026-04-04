@@ -31,44 +31,44 @@ func (m *mockContext) Reply(what interface{}, _ ...interface{}) error {
 }
 
 // Unused interface methods — zero-value stubs.
-func (m *mockContext) Bot() *telebot.Bot                              { return nil }
-func (m *mockContext) Update() telebot.Update                         { return telebot.Update{} }
-func (m *mockContext) Callback() *telebot.Callback                    { return nil }
-func (m *mockContext) Query() *telebot.Query                          { return nil }
-func (m *mockContext) InlineResult() *telebot.InlineResult            { return nil }
-func (m *mockContext) ShippingQuery() *telebot.ShippingQuery          { return nil }
-func (m *mockContext) PreCheckoutQuery() *telebot.PreCheckoutQuery    { return nil }
-func (m *mockContext) Poll() *telebot.Poll                            { return nil }
-func (m *mockContext) PollAnswer() *telebot.PollAnswer                { return nil }
-func (m *mockContext) ChatMember() *telebot.ChatMemberUpdate          { return nil }
-func (m *mockContext) ChatJoinRequest() *telebot.ChatJoinRequest      { return nil }
-func (m *mockContext) Migration() (int64, int64)                      { return 0, 0 }
-func (m *mockContext) Topic() *telebot.Topic                          { return nil }
-func (m *mockContext) Boost() *telebot.BoostUpdated                   { return nil }
-func (m *mockContext) BoostRemoved() *telebot.BoostRemoved            { return nil }
-func (m *mockContext) Recipient() telebot.Recipient                   { return nil }
-func (m *mockContext) Entities() telebot.Entities                     { return nil }
-func (m *mockContext) Data() string                                   { return "" }
-func (m *mockContext) Args() []string                                 { return nil }
-func (m *mockContext) Send(_ interface{}, _ ...interface{}) error     { return nil }
-func (m *mockContext) SendAlbum(_ telebot.Album, _ ...interface{}) error { return nil }
-func (m *mockContext) Forward(_ telebot.Editable, _ ...interface{}) error { return nil }
+func (m *mockContext) Bot() *telebot.Bot                                     { return nil }
+func (m *mockContext) Update() telebot.Update                                { return telebot.Update{} }
+func (m *mockContext) Callback() *telebot.Callback                           { return nil }
+func (m *mockContext) Query() *telebot.Query                                 { return nil }
+func (m *mockContext) InlineResult() *telebot.InlineResult                   { return nil }
+func (m *mockContext) ShippingQuery() *telebot.ShippingQuery                 { return nil }
+func (m *mockContext) PreCheckoutQuery() *telebot.PreCheckoutQuery           { return nil }
+func (m *mockContext) Poll() *telebot.Poll                                   { return nil }
+func (m *mockContext) PollAnswer() *telebot.PollAnswer                       { return nil }
+func (m *mockContext) ChatMember() *telebot.ChatMemberUpdate                 { return nil }
+func (m *mockContext) ChatJoinRequest() *telebot.ChatJoinRequest             { return nil }
+func (m *mockContext) Migration() (int64, int64)                             { return 0, 0 }
+func (m *mockContext) Topic() *telebot.Topic                                 { return nil }
+func (m *mockContext) Boost() *telebot.BoostUpdated                          { return nil }
+func (m *mockContext) BoostRemoved() *telebot.BoostRemoved                   { return nil }
+func (m *mockContext) Recipient() telebot.Recipient                          { return nil }
+func (m *mockContext) Entities() telebot.Entities                            { return nil }
+func (m *mockContext) Data() string                                          { return "" }
+func (m *mockContext) Args() []string                                        { return nil }
+func (m *mockContext) Send(_ interface{}, _ ...interface{}) error            { return nil }
+func (m *mockContext) SendAlbum(_ telebot.Album, _ ...interface{}) error     { return nil }
+func (m *mockContext) Forward(_ telebot.Editable, _ ...interface{}) error    { return nil }
 func (m *mockContext) ForwardTo(_ telebot.Recipient, _ ...interface{}) error { return nil }
-func (m *mockContext) Edit(_ interface{}, _ ...interface{}) error     { return nil }
-func (m *mockContext) EditCaption(_ string, _ ...interface{}) error   { return nil }
-func (m *mockContext) EditOrSend(_ interface{}, _ ...interface{}) error { return nil }
-func (m *mockContext) EditOrReply(_ interface{}, _ ...interface{}) error { return nil }
-func (m *mockContext) Delete() error                                  { return nil }
-func (m *mockContext) DeleteAfter(_ time.Duration) *time.Timer        { return nil }
-func (m *mockContext) Notify(_ telebot.ChatAction) error              { return nil }
-func (m *mockContext) Ship(_ ...interface{}) error                    { return nil }
-func (m *mockContext) Accept(_ ...string) error                       { return nil }
-func (m *mockContext) Answer(_ *telebot.QueryResponse) error          { return nil }
-func (m *mockContext) Respond(_ ...*telebot.CallbackResponse) error   { return nil }
-func (m *mockContext) RespondText(_ string) error                     { return nil }
-func (m *mockContext) RespondAlert(_ string) error                    { return nil }
-func (m *mockContext) Get(_ string) interface{}                       { return nil }
-func (m *mockContext) Set(_ string, _ interface{})                    {}
+func (m *mockContext) Edit(_ interface{}, _ ...interface{}) error            { return nil }
+func (m *mockContext) EditCaption(_ string, _ ...interface{}) error          { return nil }
+func (m *mockContext) EditOrSend(_ interface{}, _ ...interface{}) error      { return nil }
+func (m *mockContext) EditOrReply(_ interface{}, _ ...interface{}) error     { return nil }
+func (m *mockContext) Delete() error                                         { return nil }
+func (m *mockContext) DeleteAfter(_ time.Duration) *time.Timer               { return nil }
+func (m *mockContext) Notify(_ telebot.ChatAction) error                     { return nil }
+func (m *mockContext) Ship(_ ...interface{}) error                           { return nil }
+func (m *mockContext) Accept(_ ...string) error                              { return nil }
+func (m *mockContext) Answer(_ *telebot.QueryResponse) error                 { return nil }
+func (m *mockContext) Respond(_ ...*telebot.CallbackResponse) error          { return nil }
+func (m *mockContext) RespondText(_ string) error                            { return nil }
+func (m *mockContext) RespondAlert(_ string) error                           { return nil }
+func (m *mockContext) Get(_ string) interface{}                              { return nil }
+func (m *mockContext) Set(_ string, _ interface{})                           {}
 
 // --- OnText ---
 
