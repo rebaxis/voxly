@@ -36,7 +36,11 @@ func (c *Client) DownloadFile(fileID string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file stream for %q: %w", fileID, err)
 	}
-	defer reader.Close()
+	defer func() {
+		if cerr := reader.Close(); cerr != nil {
+			c.log.Warn("closing telegram file stream", zap.String("file_id", fileID), zap.Error(cerr))
+		}
+	}()
 
 	data, err := io.ReadAll(reader)
 	if err != nil {

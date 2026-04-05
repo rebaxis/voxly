@@ -73,7 +73,7 @@ func (m *mockContext) Set(_ string, _ interface{})                           {}
 // --- OnText ---
 
 func TestOnText_StartCommand(t *testing.T) {
-	h := NewHandler(newTestQueue(10, &mockProcessor{}), newTestLogger())
+	h := newTestHandler(newTestQueue(10, &mockProcessor{}))
 
 	ctx := &mockContext{
 		text:   "/start",
@@ -92,7 +92,7 @@ func TestOnText_StartCommand(t *testing.T) {
 }
 
 func TestOnText_UnknownCommand(t *testing.T) {
-	h := NewHandler(newTestQueue(10, &mockProcessor{}), newTestLogger())
+	h := newTestHandler(newTestQueue(10, &mockProcessor{}))
 
 	ctx := &mockContext{
 		text:   "/unknown",
@@ -111,7 +111,7 @@ func TestOnText_UnknownCommand(t *testing.T) {
 
 func TestOnVoice_AcknowledgesAndSubmitsJob(t *testing.T) {
 	q := newTestQueue(10, &mockProcessor{})
-	h := NewHandler(q, newTestLogger())
+	h := newTestHandler(q)
 
 	ctx := &mockContext{
 		sender: &telebot.User{ID: 42},
@@ -154,7 +154,7 @@ func TestOnVoice_AcknowledgesAndSubmitsJob(t *testing.T) {
 
 func TestOnAudio_AcknowledgesAndSubmitsJob(t *testing.T) {
 	q := newTestQueue(10, &mockProcessor{})
-	h := NewHandler(q, newTestLogger())
+	h := newTestHandler(q)
 
 	ctx := &mockContext{
 		sender: &telebot.User{ID: 7},

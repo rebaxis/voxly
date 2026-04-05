@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/voxly/voxly/internal/lib/logger"
+	"github.com/voxly/voxly/internal/model"
+	"github.com/voxly/voxly/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -31,4 +33,37 @@ func newTestQueue(size int, proc Processor) *Queue {
 		processor: proc,
 		log:       newTestLogger().WithComponent("queue"),
 	}
+}
+
+// --- mock services ---
+
+// mockMeetingService implements service.MeetingService in memory.
+type mockMeetingService struct {
+	meetings []*model.Meeting
+}
+
+var _ service.MeetingService = (*mockMeetingService)(nil)
+
+func (m *mockMeetingService) Register(_ context.Context, _ int64) error { return nil }
+
+func (m *mockMeetingService) List(_ context.Context, _ int64) ([]*model.Meeting, error) {
+	return m.meetings, nil
+}
+
+func (m *mockMeetingService) Get(_ context.Context, userID int64, id string) (*model.Meeting, error) {
+	for _, mtg := range m.meetings {
+		if mtg.ID == id && mtg.UserID == userID {
+			return mtg, nil
+		}
+	}
+	return nil, nil
+}
+
+func (m *mockMeetingService) Search(_ context.Context, _ int64, _ string) ([]*model.Meeting, error) {
+	return m.meetings, nil
+}
+
+// newTestHandler creates a Handler wired with a mock MeetingService.
+func newTestHandler(q *Queue) *Handler {
+	return NewHandler(q, &mockMeetingService{}, newTestLogger())
 }

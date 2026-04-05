@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS meetings;
+DROP TABLE IF EXISTS users;
