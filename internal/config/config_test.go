@@ -51,7 +51,17 @@ func TestLoadFile_MissingFileIsIgnored(t *testing.T) {
 
 func TestLoadFlags_OverridesNonZeroValues(t *testing.T) {
 	cfg := &Config{LogLevel: "info", WorkerCount: 5, QueueSize: 100}
-	loadFlags(cfg, "new-token", "warn", 8, 200)
+	loadFlags(cfg, flagValues{
+		token:            "new-token",
+		logLevel:         "warn",
+		workerCount:      8,
+		queueSize:        200,
+		dbDSN:            "postgres://localhost/voxly",
+		dbMigrationsPath: "file://migrations",
+		dbMaxOpenConns:   20,
+		ssAuthKey:        "ss-auth-key-b64",
+		ssScope:          "SALUTE_SPEECH_PERS",
+	})
 
 	if cfg.TelegramToken != "new-token" {
 		t.Errorf("TelegramToken: want %q, got %q", "new-token", cfg.TelegramToken)
@@ -65,17 +75,32 @@ func TestLoadFlags_OverridesNonZeroValues(t *testing.T) {
 	if cfg.QueueSize != 200 {
 		t.Errorf("QueueSize: want 200, got %d", cfg.QueueSize)
 	}
+	if cfg.DatabaseDSN != "postgres://localhost/voxly" {
+		t.Errorf("DatabaseDSN: want %q, got %q", "postgres://localhost/voxly", cfg.DatabaseDSN)
+	}
+	if cfg.DBMaxOpenConns != 20 {
+		t.Errorf("DBMaxOpenConns: want 20, got %d", cfg.DBMaxOpenConns)
+	}
+	if cfg.SaluteSpeechAuthorizationKey != "ss-auth-key-b64" {
+		t.Errorf("SaluteSpeechAuthorizationKey: want %q, got %q", "ss-auth-key-b64", cfg.SaluteSpeechAuthorizationKey)
+	}
+	if cfg.SaluteSpeechScope != "SALUTE_SPEECH_PERS" {
+		t.Errorf("SaluteSpeechScope: want %q, got %q", "SALUTE_SPEECH_PERS", cfg.SaluteSpeechScope)
+	}
 }
 
 func TestLoadFlags_IgnoresZeroValues(t *testing.T) {
 	cfg := &Config{TelegramToken: "original", LogLevel: "info", WorkerCount: 5, QueueSize: 100}
-	loadFlags(cfg, "", "", 0, 0)
+	loadFlags(cfg, flagValues{})
 
 	if cfg.TelegramToken != "original" {
 		t.Errorf("TelegramToken should be unchanged, got %q", cfg.TelegramToken)
 	}
 	if cfg.WorkerCount != 5 {
 		t.Errorf("WorkerCount should be unchanged, got %d", cfg.WorkerCount)
+	}
+	if cfg.DatabaseDSN != "" {
+		t.Errorf("DatabaseDSN should be unchanged, got %q", cfg.DatabaseDSN)
 	}
 }
 

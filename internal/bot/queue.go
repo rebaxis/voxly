@@ -40,6 +40,10 @@ type Queue struct {
 	processor Processor
 	log       *logger.Logger
 	wg        sync.WaitGroup
+
+	// workCtx is used for Processor.Process and for non-blocking result delivery when canceled.
+	// Set by StartWorkers before any worker runs (nil argument becomes [context.Background]).
+	workCtx context.Context
 }
 
 // NewQueue constructs a Queue with channel sizes taken from cfg.
@@ -74,12 +78,18 @@ func (q *Queue) Results() <-chan JobResult {
 	return q.results
 }
 
-// StartWorkers launches count worker goroutines. Each worker exits when the
-// jobs channel is closed (via Stop) or when ctx is cancelled.
-func (q *Queue) StartWorkers(ctx context.Context, count int) {
+// StartWorkers runs count workers until Stop closes the jobs channel.
+// workCtx is passed to [Processor.Process] and used when sending each [JobResult]: if workCtx is
+// canceled, the worker stops blocking on the results channel and drops that result (log warning).
+// Pass nil to use [context.Background] (default for bots that do not need early cancellation).
+func (q *Queue) StartWorkers(count int, workCtx context.Context) {
+	if workCtx == nil {
+		workCtx = context.Background()
+	}
+	q.workCtx = workCtx
 	for i := range count {
 		q.wg.Add(1)
-		go q.worker(ctx, i)
+		go q.worker(i)
 	}
 	q.log.Info("workers started", zap.Int("count", count))
 }
@@ -93,36 +103,38 @@ func (q *Queue) Stop() {
 	q.log.Info("queue stopped")
 }
 
-func (q *Queue) worker(ctx context.Context, id int) {
+func (q *Queue) worker(id int) {
 	defer q.wg.Done()
 	q.log.Info("worker started", zap.Int("id", id))
 
 	for job := range q.jobs {
-		select {
-		case <-ctx.Done():
-			q.log.Info("worker context cancelled", zap.Int("id", id))
-			return
-		default:
-			q.processJob(ctx, job)
-		}
+		q.processJob(job)
 	}
 
 	q.log.Info("worker stopped", zap.Int("id", id))
 }
 
-func (q *Queue) processJob(ctx context.Context, job Job) {
+func (q *Queue) processJob(job Job) {
 	q.log.Info("processing job",
 		zap.String("type", string(job.Type)),
 		zap.Int64("user_id", job.UserID),
 		zap.String("file_id", job.FileID),
 	)
 
-	text, err := q.processor.Process(ctx, job)
+	text, err := q.processor.Process(q.workCtx, job)
 
-	q.results <- JobResult{
+	result := JobResult{
 		UserID: job.UserID,
 		ChatID: job.ChatID,
 		Text:   text,
 		Err:    err,
+	}
+	select {
+	case q.results <- result:
+	case <-q.workCtx.Done():
+		q.log.Warn("context canceled: job result not delivered",
+			zap.Int64("chat_id", job.ChatID),
+			zap.String("file_id", job.FileID),
+		)
 	}
 }

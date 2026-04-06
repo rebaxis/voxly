@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"context"
-
 	"github.com/voxly/voxly/internal/config"
 	"github.com/voxly/voxly/internal/lib/logger"
 	"go.uber.org/zap"
@@ -37,16 +35,17 @@ func (b *Bot) registerHandlers() {
 	b.bot.Handle(telebot.OnText, b.handler.OnText)
 	b.bot.Handle(telebot.OnVoice, b.handler.OnVoice)
 	b.bot.Handle(telebot.OnAudio, b.handler.OnAudio)
+	b.bot.Handle(telebot.OnDocument, b.handler.OnAudio)
 	b.log.Info("telegram handlers registered")
 }
 
-// Start launches queue workers, the result dispatcher, and begins polling
-// Telegram for updates. This call blocks until Stop is invoked.
-func (b *Bot) Start(ctx context.Context) {
+// Start runs workers, result delivery, and Telegram polling until Stop.
+// Do not pass fx OnStart context here: fx cancels it as soon as hooks return.
+func (b *Bot) Start() {
 	b.log.Info("starting queue workers", zap.Int("count", b.cfg.WorkerCount))
-	b.queue.StartWorkers(ctx, b.cfg.WorkerCount)
+	b.queue.StartWorkers(b.cfg.WorkerCount, nil)
 
-	go b.dispatchResults(ctx)
+	go b.dispatchResults()
 
 	b.log.Info("starting telegram long-polling")
 	b.bot.Start()
@@ -61,20 +60,11 @@ func (b *Bot) Stop() {
 	b.queue.Stop()
 }
 
-// dispatchResults reads job results from the queue and forwards them to the
-// respective user's chat. Each result carries the target ChatID so the correct
-// user always receives the response.
-func (b *Bot) dispatchResults(ctx context.Context) {
+func (b *Bot) dispatchResults() {
 	b.log.Info("result dispatcher started")
 
 	for result := range b.queue.Results() {
-		select {
-		case <-ctx.Done():
-			b.log.Info("result dispatcher context cancelled")
-			return
-		default:
-			b.sendResult(result)
-		}
+		b.sendResult(result)
 	}
 
 	b.log.Info("result dispatcher stopped")
@@ -85,7 +75,7 @@ func (b *Bot) sendResult(result JobResult) {
 
 	var text string
 	if result.Err != nil {
-		text = "Sorry, an error occurred while processing your file: " + result.Err.Error()
+		text = "Sorry, something went wrong while processing your file. Please try again later."
 		b.log.Error("job result contains error",
 			zap.Int64("chat_id", result.ChatID),
 			zap.Error(result.Err),

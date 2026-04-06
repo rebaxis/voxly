@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"errors"
 	"testing"
 )
@@ -12,10 +11,7 @@ func TestQueue_SubmitJobIsProcessed(t *testing.T) {
 
 	job := Job{UserID: 1, ChatID: 10, Type: JobTypeTranscribe, FileID: "file1"}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	q.StartWorkers(ctx, 1)
+	q.StartWorkers(1, nil)
 
 	q.Submit(job)
 
@@ -40,10 +36,7 @@ func TestQueue_ProcessorErrorPropagatedToResult(t *testing.T) {
 	proc := &mockProcessor{err: errors.New("download failed")}
 	q := newTestQueue(10, proc)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	q.StartWorkers(ctx, 1)
+	q.StartWorkers(1, nil)
 	q.Submit(Job{UserID: 2, ChatID: 20, Type: JobTypeTranscribe, FileID: "file2"})
 	q.Stop()
 
