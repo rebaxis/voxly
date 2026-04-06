@@ -1,0 +1,13 @@
+{
+  "telegram_token": "YOUR_TELEGRAM_BOT_TOKEN",
+  "log_level": "info",
+  "worker_count": 5,
+  "queue_size": 100,
+  "database_dsn": "postgres://user:password@localhost:5432/voxly?sslmode=disable",
+  "db_migrations_path": "file://migrations",
+  "db_max_open_conns": 10,
+  "db_max_idle_conns": 5,
+  "db_conn_max_lifetime": "5m",
+  "salutespeech_authorization_key": "PASTE_AUTHORIZATION_KEY_FROM_SBER_STUDIO",
+  "salutespeech_scope": "SALUTE_SPEECH_PERS"
+}
