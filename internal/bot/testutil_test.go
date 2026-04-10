@@ -39,7 +39,9 @@ func newTestQueue(size int, proc Processor) *Queue {
 
 // mockMeetingService implements service.MeetingService in memory.
 type mockMeetingService struct {
-	meetings []*model.Meeting
+	meetings  []*model.Meeting
+	chatReply string
+	chatErr   error
 }
 
 var _ service.MeetingService = (*mockMeetingService)(nil)
@@ -61,6 +63,13 @@ func (m *mockMeetingService) Get(_ context.Context, userID int64, id string) (*m
 
 func (m *mockMeetingService) Search(_ context.Context, _ int64, _ string) ([]*model.Meeting, error) {
 	return m.meetings, nil
+}
+
+func (m *mockMeetingService) Chat(_ context.Context, _ int64, _ string) (string, error) {
+	if m.chatErr != nil {
+		return "", m.chatErr
+	}
+	return m.chatReply, nil
 }
 
 // newTestHandler creates a Handler wired with a mock MeetingService.

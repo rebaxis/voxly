@@ -57,6 +57,9 @@ func (p *FileProcessor) Process(ctx context.Context, job Job) (string, error) {
 		return "", fmt.Errorf("transcription: %w", err)
 	}
 
-	// TODO: generate summary with GigaChat API
-	return fmt.Sprintf("Transcription complete.\n\nMeeting ID: %s", meeting.ID), nil
+	msg := fmt.Sprintf("Transcription complete.\n\nMeeting ID: %s", meeting.ID)
+	if meeting.Summary != "" {
+		msg += "\n\nSummary:\n" + meeting.Summary
+	}
+	return msg, nil
 }

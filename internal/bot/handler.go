@@ -2,11 +2,13 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/voxly/voxly/internal/gigachat"
 	"github.com/voxly/voxly/internal/lib/logger"
 	"github.com/voxly/voxly/internal/model"
 	"github.com/voxly/voxly/internal/service"
@@ -18,19 +20,19 @@ const (
 	handlerDBTimeout = 30 * time.Second
 
 	helpCommandsList = "/list — list all saved meetings\n" +
-		"/get <id> — retrieve meeting transcript\n" +
+		"/get <id> — retrieve meeting transcript and summary\n" +
 		"/find <keyword> — search meetings by keyword\n" +
-		"/chat <question> — ask the AI assistant (planned)"
+		"/chat <question> — ask GigaChat"
 
 	helpCommandsShort = "/start — register\n" +
 		"/list — list meetings\n" +
 		"/get <id> — retrieve meeting\n" +
 		"/find <keyword> — search meetings\n" +
-		"/chat <question> — ask AI (planned)"
+		"/chat <question> — ask GigaChat"
 
 	usageGet  = "Usage: /get <id> — retrieve meeting"
 	usageFind = "Usage: /find <keyword> — search meetings"
-	usageChat = "Usage: /chat <question> — ask AI (planned)"
+	usageChat = "Usage: /chat <question> — ask GigaChat"
 )
 
 // Handler contains the Telegram message handlers used by the bot.
@@ -147,7 +149,20 @@ func (h *Handler) OnText(c telebot.Context) error {
 		if question == "" {
 			return h.reply(c, usageChat)
 		}
-		return h.reply(c, fmt.Sprintf("AI chat is not available yet.\nYour question: %s", question))
+		ctx, cancel := h.requestCtx()
+		defer cancel()
+		answer, err := h.meetings.Chat(ctx, userID, question)
+		if err != nil {
+			if errors.Is(err, gigachat.ErrNotConfigured) {
+				return h.reply(c, "GigaChat is not configured. Set gigachat_authorization_key in config (Sber Studio).")
+			}
+			h.log.Error("gigachat chat failed", zap.Error(err))
+			return h.reply(c, "Could not get an answer from GigaChat. Try again later.")
+		}
+		if strings.TrimSpace(answer) == "" {
+			return h.reply(c, "GigaChat returned an empty answer. Try rephrasing your question.")
+		}
+		return h.reply(c, answer)
 	}
 
 	return h.reply(c, "Unknown command. Available commands:\n"+helpCommandsShort)
@@ -286,8 +301,16 @@ func formatMeetingList(meetings []*model.Meeting) string {
 }
 
 func formatMeetingDetail(m *model.Meeting) string {
-	return fmt.Sprintf("Meeting %s (%s):\n\n%s",
-		m.ID, m.CreatedAt.Format("02 Jan 2006 15:04"), m.Transcript)
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Meeting %s (%s):\n\n", m.ID, m.CreatedAt.Format("02 Jan 2006 15:04"))
+	if strings.TrimSpace(m.Summary) != "" {
+		sb.WriteString("Summary:\n")
+		sb.WriteString(m.Summary)
+		sb.WriteString("\n\n---\n\n")
+	}
+	sb.WriteString("Transcript:\n")
+	sb.WriteString(m.Transcript)
+	return sb.String()
 }
 
 func formatSearchResult(keyword string, meetings []*model.Meeting) string {

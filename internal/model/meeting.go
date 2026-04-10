@@ -14,5 +14,6 @@ type Meeting struct {
 	UserID     int64
 	FileID     string
 	Transcript string
+	Summary    string // short Russian summary from GigaChat (optional)
 	CreatedAt  time.Time
 }
