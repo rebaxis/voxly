@@ -26,6 +26,9 @@ var cli struct {
 	dbConnMaxLifetime *time.Duration
 	ssAuthKey         *string
 	ssScope           *string
+	gcAuthKey         *string
+	gcScope           *string
+	gcModel           *string
 }
 
 // RegisterFlags defines all CLI flags on the default [flag.CommandLine].
@@ -46,6 +49,9 @@ func RegisterFlags() {
 	cli.dbConnMaxLifetime = flag.Duration("db-conn-max-lifetime", 0, "Max DB connection lifetime (e.g. 5m)")
 	cli.ssAuthKey = flag.String("ss-auth-key", "", "SaluteSpeech Authorization Key from Studio (Basic credential)")
 	cli.ssScope = flag.String("ss-scope", "", "SaluteSpeech OAuth scope (e.g. SALUTE_SPEECH_CORP, SALUTE_SPEECH_PERS)")
+	cli.gcAuthKey = flag.String("gc-auth-key", "", "GigaChat Authorization Key from Studio (Basic credential)")
+	cli.gcScope = flag.String("gc-scope", "", "GigaChat OAuth scope (e.g. GIGACHAT_API_PERS)")
+	cli.gcModel = flag.String("gc-model", "", "GigaChat model id (default GigaChat)")
 }
 
 // Config holds all application settings.
@@ -70,6 +76,11 @@ type Config struct {
 	// SaluteSpeech — use authorization_key and scope
 	SaluteSpeechAuthorizationKey string `json:"salutespeech_authorization_key"`
 	SaluteSpeechScope            string `json:"salutespeech_scope"`
+
+	// GigaChat — summaries and /chat (optional; stub if empty)
+	GigaChatAuthorizationKey string `json:"gigachat_authorization_key"`
+	GigaChatScope            string `json:"gigachat_scope"`
+	GigaChatModel            string `json:"gigachat_model"`
 }
 
 // Load reads configuration applying sources in ascending priority order:
@@ -89,6 +100,7 @@ func Load() (*Config, error) {
 		DBMaxIdleConns:    5,
 		DBConnMaxLifetime: 5 * time.Minute,
 		SaluteSpeechScope: "SALUTE_SPEECH_PERS",
+		GigaChatScope:     "GIGACHAT_API_PERS",
 	}
 
 	if err := loadFile(cfg, *cli.configFile); err != nil {
@@ -107,6 +119,9 @@ func Load() (*Config, error) {
 		dbConnMaxLifetime: *cli.dbConnMaxLifetime,
 		ssAuthKey:         *cli.ssAuthKey,
 		ssScope:           *cli.ssScope,
+		gcAuthKey:         *cli.gcAuthKey,
+		gcScope:           *cli.gcScope,
+		gcModel:           *cli.gcModel,
 	})
 	loadEnv(cfg)
 
@@ -157,6 +172,9 @@ type flagValues struct {
 	dbConnMaxLifetime time.Duration
 	ssAuthKey         string
 	ssScope           string
+	gcAuthKey         string
+	gcScope           string
+	gcModel           string
 }
 
 // loadFlags overrides config fields with non-zero flag values.
@@ -193,6 +211,15 @@ func loadFlags(cfg *Config, f flagValues) {
 	}
 	if f.ssScope != "" {
 		cfg.SaluteSpeechScope = f.ssScope
+	}
+	if f.gcAuthKey != "" {
+		cfg.GigaChatAuthorizationKey = f.gcAuthKey
+	}
+	if f.gcScope != "" {
+		cfg.GigaChatScope = f.gcScope
+	}
+	if f.gcModel != "" {
+		cfg.GigaChatModel = f.gcModel
 	}
 }
 
@@ -240,5 +267,14 @@ func loadEnv(cfg *Config) {
 	}
 	if v := os.Getenv("SALUTESPEECH_SCOPE"); v != "" {
 		cfg.SaluteSpeechScope = v
+	}
+	if v := os.Getenv("GIGACHAT_AUTHORIZATION_KEY"); v != "" {
+		cfg.GigaChatAuthorizationKey = v
+	}
+	if v := os.Getenv("GIGACHAT_SCOPE"); v != "" {
+		cfg.GigaChatScope = v
+	}
+	if v := os.Getenv("GIGACHAT_MODEL"); v != "" {
+		cfg.GigaChatModel = v
 	}
 }

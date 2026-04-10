@@ -91,6 +91,23 @@ func TestOnText_StartCommand(t *testing.T) {
 	}
 }
 
+func TestOnText_ChatCommand(t *testing.T) {
+	q := newTestQueue(10, &mockProcessor{})
+	h := NewHandler(q, &mockMeetingService{chatReply: "Ответ от модели."}, newTestLogger())
+
+	ctx := &mockContext{
+		text:   "/chat What is 2+2?",
+		sender: &telebot.User{ID: 3},
+	}
+
+	if err := h.OnText(ctx); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ctx.replied != "Ответ от модели." {
+		t.Errorf("reply: want model answer, got %q", ctx.replied)
+	}
+}
+
 func TestOnText_UnknownCommand(t *testing.T) {
 	h := newTestHandler(newTestQueue(10, &mockProcessor{}))
 

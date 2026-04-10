@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/voxly/voxly/internal/gigachat"
 	"github.com/voxly/voxly/internal/lib/logger"
 	"github.com/voxly/voxly/internal/model"
 	"github.com/voxly/voxly/internal/repository"
@@ -23,6 +25,7 @@ type TranscriptionService interface {
 
 type transcriptionService struct {
 	ss       salutespeech.Client
+	gc       gigachat.Client
 	meetings repository.MeetingRepository
 	log      *logger.Logger
 }
@@ -30,11 +33,13 @@ type transcriptionService struct {
 // NewTranscriptionService constructs a TranscriptionService.
 func NewTranscriptionService(
 	ss salutespeech.Client,
+	gc gigachat.Client,
 	meetings repository.MeetingRepository,
 	log *logger.Logger,
 ) TranscriptionService {
 	return &transcriptionService{
 		ss:       ss,
+		gc:       gc,
 		meetings: meetings,
 		log:      log.WithComponent("transcription-service"),
 	}
@@ -94,6 +99,18 @@ func (s *transcriptionService) Transcribe(
 		zap.Int64("user_id", userID),
 		zap.Int("transcript_chars", len(transcript)),
 	)
+
+	summary, sumErr := s.gc.SummarizeTranscript(ctx, transcript)
+	if sumErr != nil {
+		s.log.Warn("gigachat summarize failed", zap.Error(sumErr))
+	} else if strings.TrimSpace(summary) != "" {
+		if err := s.meetings.UpdateSummary(ctx, userID, meeting.ID, summary); err != nil {
+			s.log.Warn("update meeting summary failed", zap.Error(err))
+		} else {
+			meeting.Summary = summary
+			s.log.Info("meeting summary saved", zap.String("meeting_id", meeting.ID))
+		}
+	}
 
 	return meeting, nil
 }

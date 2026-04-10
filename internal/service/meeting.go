@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/voxly/voxly/internal/gigachat"
 	"github.com/voxly/voxly/internal/lib/logger"
 	"github.com/voxly/voxly/internal/model"
 	"github.com/voxly/voxly/internal/repository"
@@ -25,11 +27,15 @@ type MeetingService interface {
 
 	// Search performs a full-text search on meeting transcripts.
 	Search(ctx context.Context, userID int64, keyword string) ([]*model.Meeting, error)
+
+	// Chat sends a free-form question to GigaChat (no meeting context).
+	Chat(ctx context.Context, userID int64, question string) (string, error)
 }
 
 type meetingService struct {
 	meetings repository.MeetingRepository
 	users    repository.UserRepository
+	gc       gigachat.Client
 	log      *logger.Logger
 }
 
@@ -37,11 +43,13 @@ type meetingService struct {
 func NewMeetingService(
 	meetings repository.MeetingRepository,
 	users repository.UserRepository,
+	gc gigachat.Client,
 	log *logger.Logger,
 ) MeetingService {
 	return &meetingService{
 		meetings: meetings,
 		users:    users,
+		gc:       gc,
 		log:      log.WithComponent("meeting-service"),
 	}
 }
@@ -76,4 +84,17 @@ func (s *meetingService) Search(ctx context.Context, userID int64, keyword strin
 		return nil, fmt.Errorf("search meetings for user %d keyword %q: %w", userID, keyword, err)
 	}
 	return meetings, nil
+}
+
+func (s *meetingService) Chat(ctx context.Context, userID int64, question string) (string, error) {
+	question = strings.TrimSpace(question)
+	if question == "" {
+		return "", fmt.Errorf("empty question")
+	}
+	s.log.Info("gigachat chat", zap.Int64("user_id", userID))
+	ans, err := s.gc.Answer(ctx, "", question)
+	if err != nil {
+		return "", fmt.Errorf("gigachat: %w", err)
+	}
+	return ans, nil
 }

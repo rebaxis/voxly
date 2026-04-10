@@ -9,5 +9,8 @@
   "db_max_idle_conns": 5,
   "db_conn_max_lifetime": "5m",
   "salutespeech_authorization_key": "PASTE_AUTHORIZATION_KEY_FROM_SBER_STUDIO",
-  "salutespeech_scope": "SALUTE_SPEECH_PERS"
+  "salutespeech_scope": "SALUTE_SPEECH_PERS",
+  "gigachat_authorization_key": "PASTE_GIGACHAT_AUTHORIZATION_KEY_FROM_SBER_STUDIO",
+  "gigachat_scope": "GIGACHAT_API_PERS",
+  "gigachat_model": "GigaChat"
 }

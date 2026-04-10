@@ -15,6 +15,8 @@ type MeetingRepository interface {
 	GetForUser(ctx context.Context, userID int64, id string) (*model.Meeting, error)
 	ListByUser(ctx context.Context, userID int64) ([]*model.Meeting, error)
 	SearchByKeyword(ctx context.Context, userID int64, keyword string) ([]*model.Meeting, error)
+	// UpdateSummary sets summary for a meeting owned by userID; error if no row updated.
+	UpdateSummary(ctx context.Context, userID int64, meetingID, summary string) error
 }
 
 type meetingRepo struct {
@@ -45,12 +47,12 @@ func (r *meetingRepo) Save(ctx context.Context, m *model.Meeting) error {
 // GetForUser returns the meeting with the given UUID if it belongs to userID; nil if not found or wrong owner.
 func (r *meetingRepo) GetForUser(ctx context.Context, userID int64, id string) (*model.Meeting, error) {
 	const q = `
-		SELECT id, user_id, file_id, transcript, created_at
+		SELECT id, user_id, file_id, transcript, summary, created_at
 		FROM meetings WHERE id = $1 AND user_id = $2`
 
 	m := &model.Meeting{}
 	err := r.db.QueryRowContext(ctx, q, id, userID).
-		Scan(&m.ID, &m.UserID, &m.FileID, &m.Transcript, &m.CreatedAt)
+		Scan(&m.ID, &m.UserID, &m.FileID, &m.Transcript, &m.Summary, &m.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -64,7 +66,7 @@ func (r *meetingRepo) GetForUser(ctx context.Context, userID int64, id string) (
 // ListByUser returns all meetings for the given user, newest first.
 func (r *meetingRepo) ListByUser(ctx context.Context, userID int64) ([]*model.Meeting, error) {
 	const q = `
-		SELECT id, user_id, file_id, transcript, created_at
+		SELECT id, user_id, file_id, transcript, summary, created_at
 		FROM meetings
 		WHERE user_id = $1
 		ORDER BY created_at DESC`
@@ -81,7 +83,7 @@ func (r *meetingRepo) ListByUser(ctx context.Context, userID int64) ([]*model.Me
 // SearchByKeyword performs a full-text search on the Russian-language transcript.
 func (r *meetingRepo) SearchByKeyword(ctx context.Context, userID int64, keyword string) ([]*model.Meeting, error) {
 	const q = `
-		SELECT id, user_id, file_id, transcript, created_at
+		SELECT id, user_id, file_id, transcript, summary, created_at
 		FROM meetings
 		WHERE user_id = $1
 		  AND to_tsvector('russian', transcript) @@ plainto_tsquery('russian', $2)
@@ -96,11 +98,28 @@ func (r *meetingRepo) SearchByKeyword(ctx context.Context, userID int64, keyword
 	return scanMeetings(rows)
 }
 
+// UpdateSummary persists the GigaChat summary for a meeting row owned by userID.
+func (r *meetingRepo) UpdateSummary(ctx context.Context, userID int64, meetingID, summary string) error {
+	const q = `UPDATE meetings SET summary = $3 WHERE id = $1 AND user_id = $2`
+	res, err := r.db.ExecContext(ctx, q, meetingID, userID, summary)
+	if err != nil {
+		return fmt.Errorf("update summary meeting %q user %d: %w", meetingID, userID, err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("meeting %q not found for user %d", meetingID, userID)
+	}
+	return nil
+}
+
 func scanMeetings(rows *sql.Rows) ([]*model.Meeting, error) {
 	var meetings []*model.Meeting
 	for rows.Next() {
 		m := &model.Meeting{}
-		if err := rows.Scan(&m.ID, &m.UserID, &m.FileID, &m.Transcript, &m.CreatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.UserID, &m.FileID, &m.Transcript, &m.Summary, &m.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan meeting row: %w", err)
 		}
 		meetings = append(meetings, m)

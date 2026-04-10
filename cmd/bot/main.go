@@ -11,6 +11,7 @@ import (
 	"github.com/voxly/voxly/internal/bot"
 	"github.com/voxly/voxly/internal/config"
 	"github.com/voxly/voxly/internal/db"
+	"github.com/voxly/voxly/internal/gigachat"
 	"github.com/voxly/voxly/internal/lib/logger"
 	"github.com/voxly/voxly/internal/repository"
 	"github.com/voxly/voxly/internal/salutespeech"
@@ -35,6 +36,7 @@ func main() {
 			fx.Annotate(repository.NewUserRepository, fx.As(new(repository.UserRepository))),
 			// SaluteSpeech client
 			newSaluteSpeechClient,
+			newGigaChatClient,
 			// Service layer
 			fx.Annotate(service.NewMeetingService, fx.As(new(service.MeetingService))),
 			fx.Annotate(service.NewTranscriptionService, fx.As(new(service.TranscriptionService))),
@@ -107,6 +109,18 @@ func newSaluteSpeechClient(cfg *config.Config, log *logger.Logger) salutespeech.
 	return salutespeech.New(salutespeech.Config{
 		AuthorizationKey: cfg.SaluteSpeechAuthorizationKey,
 		Scope:            cfg.SaluteSpeechScope,
+	}, log)
+}
+
+func newGigaChatClient(cfg *config.Config, log *logger.Logger) gigachat.Client {
+	if strings.TrimSpace(cfg.GigaChatAuthorizationKey) == "" {
+		log.Info("GigaChat credentials not configured — summaries and /chat use a stub")
+		return gigachat.NewStub()
+	}
+	return gigachat.New(gigachat.Config{
+		AuthorizationKey: cfg.GigaChatAuthorizationKey,
+		Scope:            cfg.GigaChatScope,
+		Model:            cfg.GigaChatModel,
 	}, log)
 }
 
