@@ -80,13 +80,14 @@ func (r *meetingRepo) ListByUser(ctx context.Context, userID int64) ([]*model.Me
 	return scanMeetings(rows)
 }
 
-// SearchByKeyword performs a full-text search on the Russian-language transcript.
+// SearchByKeyword performs a full-text search on the Russian-language transcript and summary.
 func (r *meetingRepo) SearchByKeyword(ctx context.Context, userID int64, keyword string) ([]*model.Meeting, error) {
 	const q = `
 		SELECT id, user_id, file_id, transcript, summary, created_at
 		FROM meetings
 		WHERE user_id = $1
-		  AND to_tsvector('russian', transcript) @@ plainto_tsquery('russian', $2)
+		  AND to_tsvector('russian', coalesce(transcript, '') || ' ' || coalesce(summary, ''))
+		      @@ plainto_tsquery('russian', $2)
 		ORDER BY created_at DESC`
 
 	rows, err := r.db.QueryContext(ctx, q, userID, keyword)
