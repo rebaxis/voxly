@@ -21,17 +21,17 @@ const (
 
 	helpCommandsList = "/list — list all saved meetings\n" +
 		"/get <id> — retrieve meeting transcript and summary\n" +
-		"/find <keyword> — search meetings by keyword\n" +
+		"/find <keyword> — search transcript and summary\n" +
 		"/chat <question> — ask GigaChat"
 
 	helpCommandsShort = "/start — register\n" +
 		"/list — list meetings\n" +
 		"/get <id> — retrieve meeting\n" +
-		"/find <keyword> — search meetings\n" +
+		"/find <keyword> — search transcript and summary\n" +
 		"/chat <question> — ask GigaChat"
 
 	usageGet  = "Usage: /get <id> — retrieve meeting"
-	usageFind = "Usage: /find <keyword> — search meetings"
+	usageFind = "Usage: /find <keyword> — search transcript and summary"
 	usageChat = "Usage: /chat <question> — ask GigaChat"
 )
 

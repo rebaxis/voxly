@@ -89,11 +89,11 @@ PostgreSQL is used for storage. Migrations run automatically on startup (includi
 | Table      | Columns                                          | Notes                                  |
 |------------|--------------------------------------------------|----------------------------------------|
 | `users`    | `user_id`, `created_at`                          | Registered on `/start` or first upload |
-| `meetings` | `id` (UUID), `user_id`, `file_id`, `transcript`, `summary`, `created_at` | `summary` filled by GigaChat after transcription; GIN index on `transcript` for `/find` |
+| `meetings` | `id` (UUID), `user_id`, `file_id`, `transcript`, `summary`, `created_at` | `summary` filled by GigaChat after transcription; GIN index on combined transcript + summary for `/find` |
 
 #### Full-text search
 
-`/find` uses PostgreSQL `to_tsvector` / `plainto_tsquery` with the `russian` text search configuration.
+`/find` uses PostgreSQL `to_tsvector` / `plainto_tsquery` with the `russian` text search configuration over **transcript and summary** (combined).
 
 ### SaluteSpeech Integration
 
@@ -190,5 +190,5 @@ go run ./cmd/bot -config=/etc/voxly/config.json -log-level=debug -workers=10
 | `/start`          | Register and display usage                         |
 | `/list`           | List all saved meetings sorted by date             |
 | `/get <id>`       | Your meeting’s **summary** (if any) and full **transcript** (scoped to your user) |
-| `/find <keyword>` | Full-text search (`russian`) across your transcripts |
+| `/find <keyword>` | Full-text search (`russian`) across your transcripts and summaries |
 | `/chat <question>`| Ask **GigaChat** a general question (requires `gigachat_authorization_key`; otherwise the bot explains that GigaChat is not configured) |
